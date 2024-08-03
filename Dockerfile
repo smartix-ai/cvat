@@ -83,6 +83,7 @@ RUN export GIT_TRACE_PACKET=1
 RUN export GIT_TRACE=1
 RUN export GIT_CURL_VERBOSE=1
 
+git config --global http.postBuffer 157286400
 RUN git config --global core.compression 0
 
 
