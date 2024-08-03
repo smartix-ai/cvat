@@ -80,11 +80,11 @@ RUN sed -i '/^av==/d' /tmp/utils/dataset_manifest/requirements.txt
 
 ARG CVAT_CONFIGURATION="production"
 
-ARG SSH_PRIVATE_KEY
-RUN mkdir -p ~/.ssh && \
-    echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa && \
-    chmod 600 ~/.ssh/id_rsa && \
-    ssh-keyscan github.com >> ~/.ssh/known_hosts
+RUN apt-get update && apt-get install -y openssh-client git && \
+    ssh-keygen -t rsa -b 4096 -f /root/.ssh/id_rsa -q -N "" && \
+    ssh-keyscan github.com >> /root/.ssh/known_hosts && \
+    git config --global url."git@github.com:".insteadOf "https://github.com/" && \
+    cat /root/.ssh/id_rsa.pub
 
 
 RUN --mount=type=cache,target=/root/.cache/pip/http-v2 \
