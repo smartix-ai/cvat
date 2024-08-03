@@ -78,6 +78,8 @@ COPY utils/dataset_manifest/requirements.txt /tmp/utils/dataset_manifest/require
 RUN sed -i '/^av==/d' /tmp/utils/dataset_manifest/requirements.txt
 
 ARG CVAT_CONFIGURATION="production"
+RUN git config --global http.version HTTP/1.1
+RUN git config --global http.postBuffer 157286400
 
 RUN --mount=type=cache,target=/root/.cache/pip/http-v2 \
     DATUMARO_HEADLESS=1 python3 -m pip wheel --no-deps \
