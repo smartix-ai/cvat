@@ -21,6 +21,7 @@ RUN apt-get update && \
         libxmlsec1-dev \
         libxmlsec1-openssl \
         libhdf5-dev \
+        openssh-client \
     && rm -rf /var/lib/apt/lists/*
 
 ARG PIP_VERSION
@@ -79,7 +80,12 @@ RUN sed -i '/^av==/d' /tmp/utils/dataset_manifest/requirements.txt
 
 ARG CVAT_CONFIGURATION="production"
 
-RUN git config --global http.postBuffer 1M
+ARG SSH_PRIVATE_KEY
+RUN mkdir -p ~/.ssh && \
+    echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa && \
+    chmod 600 ~/.ssh/id_rsa && \
+    ssh-keyscan github.com >> ~/.ssh/known_hosts
+
 
 RUN --mount=type=cache,target=/root/.cache/pip/http-v2 \
     DATUMARO_HEADLESS=1 python3 -m pip wheel --no-deps \
