@@ -79,11 +79,7 @@ RUN sed -i '/^av==/d' /tmp/utils/dataset_manifest/requirements.txt
 
 ARG CVAT_CONFIGURATION="production"
 
-RUN git config --global http.postBuffer 1048576000 && \
-    git config --global http.maxRequests 5 && \
-    git clone https://github.com/cvat-ai/datumaro.git /tmp/pip-wheel-cq1n32ov/datumaro_31c80fedca714dd1845e4830cd8d96ff && \
-    cd /tmp/pip-wheel-cq1n32ov/datumaro_31c80fedca714dd1845e4830cd8d96ff && \
-    git submodule update --init --recursive --depth 1
+RUN git config --global http.postBuffer 1M
 
 RUN --mount=type=cache,target=/root/.cache/pip/http-v2 \
     DATUMARO_HEADLESS=1 python3 -m pip wheel --no-deps \
