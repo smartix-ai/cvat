@@ -79,6 +79,13 @@ RUN sed -i '/^av==/d' /tmp/utils/dataset_manifest/requirements.txt
 
 ARG CVAT_CONFIGURATION="production"
 
+RUN export GIT_TRACE_PACKET=1
+RUN export GIT_TRACE=1
+RUN export GIT_CURL_VERBOSE=1
+
+RUN git config --global core.compression 0
+
+
 RUN --mount=type=cache,target=/root/.cache/pip/http-v2 \
     DATUMARO_HEADLESS=1 python3 -m pip wheel --no-deps \
     -r /tmp/cvat/requirements/${CVAT_CONFIGURATION}.txt \
