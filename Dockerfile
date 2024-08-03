@@ -78,13 +78,22 @@ COPY utils/dataset_manifest/requirements.txt /tmp/utils/dataset_manifest/require
 RUN sed -i '/^av==/d' /tmp/utils/dataset_manifest/requirements.txt
 
 ARG CVAT_CONFIGURATION="production"
-RUN git config --global http.version HTTP/1.1
-RUN git config --global http.postBuffer 157286400
+RUN git config --global http.lowSpeedLimit 0
+RUN git config --global http.lowSpeedTime 999999
 
-RUN --mount=type=cache,target=/root/.cache/pip/http-v2 \
-    DATUMARO_HEADLESS=1 python3 -m pip wheel --no-deps \
-    -r /tmp/cvat/requirements/${CVAT_CONFIGURATION}.txt \
-    -w /tmp/wheelhouse
+# Clone datumaro repository with retries
+RUN for i in {1..5}; do git clone --recurse-submodules https://github.com/cvat-ai/datumaro.git /tmp/datumaro && break || sleep 15; done
+
+# Move to the datumaro directory
+WORKDIR /tmp/datumaro
+
+# Build the wheel
+RUN DATUMARO_HEADLESS=1 python3 -m pip wheel --no-deps -r /tmp/cvat/requirements/${CVAT_CONFIGURATION}.txt -w /tmp/wheelhouse
+
+#RUN --mount=type=cache,target=/root/.cache/pip/http-v2 \
+#    DATUMARO_HEADLESS=1 python3 -m pip wheel --no-deps \
+#    -r /tmp/cvat/requirements/${CVAT_CONFIGURATION}.txt \
+#    -w /tmp/wheelhouse
 
 FROM golang:1.22.4 AS build-smokescreen
 
