@@ -78,17 +78,42 @@ COPY utils/dataset_manifest/requirements.txt /tmp/utils/dataset_manifest/require
 RUN sed -i '/^av==/d' /tmp/utils/dataset_manifest/requirements.txt
 
 ARG CVAT_CONFIGURATION="production"
-RUN git config --global http.lowSpeedLimit 0
-RUN git config --global http.lowSpeedTime 999999
+# Install dependencies
+RUN apt-get update && \
+    apt-get install -y git && \
+    rm -rf /var/lib/apt/lists/*
 
-# Clone datumaro repository with retries
-RUN for i in {1..5}; do git clone --recurse-submodules https://github.com/cvat-ai/datumaro.git /tmp/datumaro && break || sleep 15; done
+# Set environment variables
+ENV DATUMARO_HEADLESS=1
 
-# Move to the datumaro directory
-WORKDIR /tmp/datumaro
+# Increase git buffer size to handle large submodules
+RUN git config --global http.postBuffer 1048576000
 
-# Build the wheel
-RUN DATUMARO_HEADLESS=1 python3 -m pip wheel --no-deps -r /tmp/cvat/requirements/${CVAT_CONFIGURATION}.txt -w /tmp/wheelhouse
+# Clone the Datumaro repository and handle submodules separately
+RUN git clone --recurse-submodules https://github.com/cvat-ai/datumaro.git /datumaro && \
+    cd /datumaro && \
+    git checkout 2a4d9dbbd86f2e5fc5f8db2cfd2defdf464e9645 && \
+    git submodule update --init --recursive || \
+    (echo "Retrying submodule update..." && \
+    git submodule update --init --recursive)
+
+# Copy requirements files
+COPY requirements/production.txt /tmp/cvat/requirements/production.txt
+
+# Use pip to wheel the dependencies
+RUN python3 -m pip wheel --no-deps -r /tmp/cvat/requirements/production.txt -w /tmp/wheelhouse
+
+# (Continue with the rest of your Dockerfile steps)
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the wheelhouse to the working directory
+COPY /tmp/wheelhouse /app/wheelhouse
+
+# Install the dependencies from the wheelhouse
+RUN pip install --no-index --find-links=/app/wheelhouse -r /tmp/cvat/requirements/${CVAT_CONFIGURATION}.txt
+
 
 #RUN --mount=type=cache,target=/root/.cache/pip/http-v2 \
 #    DATUMARO_HEADLESS=1 python3 -m pip wheel --no-deps \
