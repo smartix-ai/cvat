@@ -21,7 +21,6 @@ RUN apt-get update && \
         libxmlsec1-dev \
         libxmlsec1-openssl \
         libhdf5-dev \
-        openssh-client \
     && rm -rf /var/lib/apt/lists/*
 
 ARG PIP_VERSION
@@ -79,13 +78,6 @@ COPY utils/dataset_manifest/requirements.txt /tmp/utils/dataset_manifest/require
 RUN sed -i '/^av==/d' /tmp/utils/dataset_manifest/requirements.txt
 
 ARG CVAT_CONFIGURATION="production"
-
-RUN apt-get update && apt-get install -y openssh-client git && \
-    ssh-keygen -t rsa -b 4096 -f /root/.ssh/id_rsa -q -N "" && \
-    ssh-keyscan github.com >> /root/.ssh/known_hosts && \
-    git config --global url."git@github.com:".insteadOf "https://github.com/" && \
-    cat /root/.ssh/id_rsa.pub
-
 
 RUN --mount=type=cache,target=/root/.cache/pip/http-v2 \
     DATUMARO_HEADLESS=1 python3 -m pip wheel --no-deps \
