@@ -97,19 +97,9 @@ RUN git clone --recurse-submodules https://github.com/cvat-ai/datumaro.git /datu
     (echo "Retrying submodule update..." && \
     git submodule update --init --recursive)
 
-# Copy requirements files
-COPY requirements/production.txt /tmp/cvat/requirements/production.txt
-
 # Use pip to wheel the dependencies
-RUN python3 -m pip wheel --no-deps -r /tmp/cvat/requirements/production.txt -w /tmp/wheelhouse
+RUN python3 -m pip wheel --no-deps -r /tmp/cvat/requirements/${CVAT_CONFIGURATION}.txt -w /tmp/wheelhouse
 
-# (Continue with the rest of your Dockerfile steps)
-
-# Set the working directory
-WORKDIR /app
-
-# Copy the wheelhouse to the working directory
-COPY /tmp/wheelhouse /app/wheelhouse
 
 # Install the dependencies from the wheelhouse
 RUN pip install --no-index --find-links=/app/wheelhouse -r /tmp/cvat/requirements/${CVAT_CONFIGURATION}.txt
